@@ -1,11 +1,23 @@
-# Vue 3 + Typescript + Vite
+# bc-app-count-report
 
-This template should help get you started developing with Vue 3 and Typescript in Vite.
+Custom report that shows related Application Count to Business Capabilities, as a horizontal bar chart.
 
-## Recommended IDE Setup
+## Prerequisites
+* [GIT](https://git-scm.com/)
+* [NodeJS LTS or later](git@github.com:leanix-public/bc-app-count-report.git)
+* A valid LeanIX Workspace API token for uploading the report
+## Installation
 
-- [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar)
+1. Clone the project repository into your computer using the following command:
+    ```git clone git@github.com:leanix-public/bc-app-count-report.git```
+2. Switch into the project folder and install the dependencies with ```npm install```
 
-## Type Support For `.vue` Imports in TS
-
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's `.vue` type support plugin by running `Volar: Switch TS Plugin on/off` from VSCode command palette.
+3. Create a ```lxr.json``` file with the following content:
+   ```json
+   {
+    "host": "your leanix workspace instance, e.g. app.leanix.net",
+    "apitoken": "your api token"
+   }
+   ```
+4. Upload the report into your workspace using the following command:
+  ```npm run upload```
