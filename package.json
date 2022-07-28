@@ -1,0 +1,44 @@
+{
+  "name": "bc-app-count-report",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build --mode development",
+    "upload": "vue-tsc --noEmit && vite build"
+  },
+  "dependencies": {
+    "@leanix/reporting": "^0.4.94",
+    "apexcharts": "^3.35.4",
+    "lodash.debounce": "^4.0.8",
+    "vue": "^3.2.26",
+    "vue3-apexcharts": "^1.4.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-graphql": "^1.1.0",
+    "@types/lodash.debounce": "^4.0.7",
+    "@typescript-eslint/eslint-plugin": "^5.31.0",
+    "@typescript-eslint/parser": "^5.31.0",
+    "@vitejs/plugin-vue": "^2.0.1",
+    "@vue/compiler-sfc": "^3.2.26",
+    "autoprefixer": "^10.4.7",
+    "eslint": "^8.20.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-vue": "^9.3.0",
+    "postcss": "^8.4.14",
+    "tailwindcss": "^3.1.6",
+    "typescript": "^4.5.4",
+    "vite": "^2.7.10",
+    "vite-plugin-lxr": "^0.0.3",
+    "vue-tsc": "^0.30.1"
+  },
+  "author": "LeanIX GmbH",
+  "description": "",
+  "leanixReport": {
+    "id": "net.leanix.bc_app_count_report",
+    "title": "Business Capability Application Count",
+    "defaultConfig": {}
+  }
+}
