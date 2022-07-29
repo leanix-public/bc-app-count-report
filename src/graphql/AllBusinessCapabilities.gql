@@ -1,0 +1,36 @@
+query AllBusinessCapabilities($after: String) {
+  allFactSheets(factSheetType: BusinessCapability, after: $after, sort: [{ key: "level", order: asc }], first: 1500) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    edges {
+      node {
+        id
+        type
+        displayName
+        level
+        ... on BusinessCapability {
+          relToParent {
+            edges {
+              node {
+                factSheet {
+                  id
+                }
+              }
+            }
+          }
+          relBusinessCapabilityToApplication {
+            edges {
+              node {
+                factSheet {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
