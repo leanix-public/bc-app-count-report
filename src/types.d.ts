@@ -2,5 +2,9 @@ export interface BusinessCapability {
   id: string
   type: 'BusinessCapability'
   displayName: string
-  relatedApplicationCount: number
+  level: number
+  parentId: string | null
+  children: string[]
+  relatedApplicationIds: Set<string>
+  aggregatedApplicationCount: number
 }

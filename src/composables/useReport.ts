@@ -1,14 +1,13 @@
 import '@leanix/reporting'
 import { ref, unref, computed } from 'vue'
 import { BusinessCapability } from '../types'
-import debounce from 'lodash.debounce'
+import AllBusinessCapabilities from '../graphql/AllBusinessCapabilities.gql'
+import { print } from 'graphql'
+
+// import debounce from 'lodash.debounce'
 
 const isInitialized = ref(false)
 const dataset = ref<BusinessCapability[]>([])
-
-const setDataset = debounce((newDataset: BusinessCapability[]) => {
-  dataset.value = newDataset
-}, 1000)
 
 // @ts-ignore
 const getCurrentSetup = (): Promise<lxr.ReportSetup> => lx?.currentSetup ? Promise.resolve(lx.currentSetup) : lx.init()
@@ -29,34 +28,77 @@ const loadLeanIXStyleSheet = async () => {
   head.appendChild(link)
 }
 
-const getReportConfiguration = (): lxr.ReportConfiguration => ({
-  allowTableView: false,
-  facets: [
-    {
-      key: 'first',
-      fixedFactSheetType: 'BusinessCapability',
-      attributes: ['displayName', 'relBusinessCapabilityToApplication{totalCount}'],
-      defaultFilters: [
-        { facetKey: 'hierarchyLevel', keys: ['1'] }
-      ],
-      callback: data => {
-        const _dataset = data
-          .map(({ id, type, displayName, relBusinessCapabilityToApplication: { totalCount: relatedApplicationCount } }) => ({ id, type, displayName, relatedApplicationCount }))
-          .sort((A, B) => {
-            return A.relatedApplicationCount > B.relatedApplicationCount
-              ? -1
-              : A.relatedApplicationCount < B.relatedApplicationCount
-                ? 1
-                : A.displayName > B.displayName
-                  ? 1
-                  : A.displayName < B.displayName
-                    ? -1
-                    : 0
-          })
-        setDataset(_dataset)
+const fetchDatasetPage = async (after: null | string) => {
+  const query = print(AllBusinessCapabilities)
+  let endCursor = null
+  const businessCapabilities: BusinessCapability[] = await lx.executeGraphQL(query, JSON.stringify({ after }))
+    .then(({ allFactSheets: { edges, pageInfo } }) => {
+      if (pageInfo.hasNextPage) endCursor = pageInfo.endCursor
+      return edges
+        .map(({ node }: any) => {
+          const { id, type, displayName, level, relToParent, relBusinessCapabilityToApplication } = node
+          const parentId = relToParent?.edges?.at(0)?.node?.factSheet?.id ?? null
+          const relatedApplicationIds = new Set<string>(relBusinessCapabilityToApplication?.edges
+            .map(({ node: { factSheet: { id } } }: any) => id as string))
+          const businessCapability: BusinessCapability = {
+            id,
+            type,
+            level,
+            displayName,
+            parentId,
+            children: [],
+            relatedApplicationIds,
+            aggregatedApplicationCount: 0
+          }
+          return businessCapability
+        })
+    })
+  return { endCursor, data: businessCapabilities }
+}
+
+const fetchDataset = async () => {
+  const businessCapabilities: BusinessCapability[] = []
+  let data: BusinessCapability[] = []
+  let endCursor: string | null = null
+  try {
+    lx.showSpinner()
+    do {
+      ({ data, endCursor } = await fetchDatasetPage(endCursor))
+      businessCapabilities.push(...data)
+    } while (endCursor !== null)
+  } finally {
+    lx.hideSpinner()
+  }
+
+  const businessCapabilityIndex = businessCapabilities
+    .reduce((accumulator: Record<string, BusinessCapability>, businessCapability) => {
+      if (!accumulator[businessCapability.id]) accumulator[businessCapability.id] = businessCapability
+      if (businessCapability.parentId !== null) {
+        const parent = accumulator[businessCapability.parentId] ?? null
+        if (parent === null) throw Error(`could not find parent id ${businessCapability.parentId}`)
+        businessCapability.relatedApplicationIds.forEach(id => parent.relatedApplicationIds.add(id))
+        parent.aggregatedApplicationCount = parent.relatedApplicationIds.size
       }
-    }
-  ]
+      return accumulator
+    }, {})
+  const businessCapabilitiesL1 = Object.values(businessCapabilityIndex)
+    .filter(({ level }) => level === 1)
+    .sort((A, B) => {
+      return A.aggregatedApplicationCount > B.aggregatedApplicationCount
+        ? -1
+        : A.aggregatedApplicationCount < B.aggregatedApplicationCount
+          ? 1
+          : A.displayName > B.displayName
+            ? 1
+            : A.displayName < B.displayName
+              ? -1
+              : 0
+    })
+  dataset.value = businessCapabilitiesL1
+}
+
+const getReportConfiguration = (): lxr.ReportConfiguration => ({
+  allowTableView: false
 })
 
 const initReport = async () => {
@@ -66,11 +108,11 @@ const initReport = async () => {
     await lx.init()
     const reportConfig = getReportConfiguration()
     await lx.ready(reportConfig)
+    fetchDataset()
   } finally {
     isInitialized.value = true
   }
 }
-
 
 const chartOptions = computed(() => {
   const barWidth = 30 // bar width in pixels
@@ -165,7 +207,7 @@ const series = computed(() => {
   return [
     {
       name: 'Related Applications Count',
-      data: unref(dataset).map(({ relatedApplicationCount }) => relatedApplicationCount)
+      data: unref(dataset).map(({ aggregatedApplicationCount }) => aggregatedApplicationCount)
     }
   ]
 })
@@ -175,7 +217,8 @@ const useReport = () => {
     initReport,
     dataset: computed(() => unref(dataset)),
     chartOptions,
-    series
+    series,
+    fetchDataset
   }
 }
 

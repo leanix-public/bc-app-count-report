@@ -1,6 +1,6 @@
 {
   "name": "bc-app-count-report",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build --mode development",
@@ -9,6 +9,7 @@
   "dependencies": {
     "@leanix/reporting": "^0.4.94",
     "apexcharts": "^3.35.4",
+    "graphql": "^16.5.0",
     "lodash.debounce": "^4.0.8",
     "vue": "^3.2.26",
     "vue3-apexcharts": "^1.4.1"
